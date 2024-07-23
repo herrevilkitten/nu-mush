@@ -13,8 +13,8 @@ export function initializeDatabase(world: World) {
 
   const firstRoom = world.createEntity("First Room");
   firstRoom.setAttribute(
-    "$say",
-    `$say *:me.emit(() => conjugate(me, 'say', 'says') + ' ' + args[0])`
+    "$say *",
+    `for (const thing in me.location?.contents) { }`
   );
 
   operator.moveTo(firstRoom);

@@ -7,8 +7,9 @@ export class Entity {
   owner: Entity = this;
   client?: string;
 
-  readonly attributes = new Map<string, Attribute>();
   readonly contents = new Set<Entity>();
+
+  readonly attributes = new Map<string, Attribute>();
 
   constructor(public id: dbref, public name: string) {}
 

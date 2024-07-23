@@ -1,10 +1,11 @@
 import vm from "vm";
-import { Attribute } from "./models/attribute";
+import { Attribute, isAttributeValue } from "./models/attribute";
 import { Entity } from "./models/entity";
 import { World } from "./world";
 import { Writable } from "stream";
 import { ConnectionQueue } from "./connection";
 import { Console } from "console";
+import { FUNCTIONS } from "./virtual-machine/built-ins/functions";
 
 const scriptCache: Record<string, vm.Script> = {};
 
@@ -105,6 +106,11 @@ function createEntityProxy(world: World, thing: Entity) {
       }
       console.log(typeof prop);
       if (typeof prop !== "string") {
+        return false;
+      }
+
+      if (!isAttributeValue(value)) {
+        console.error(`Cannot assign ${value} to ${target}.${prop}`);
         return false;
       }
       t.setAttribute(prop, value);
