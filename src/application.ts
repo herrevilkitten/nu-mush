@@ -1,12 +1,13 @@
 import { CONFIG } from "./config";
 import { MemoryDatabase } from "./database/memory";
 import { World } from "./world";
+import { isError } from "./utils/error";
+import {
+  matchBuiltinCommand,
+  BuiltinCommandParameters,
+} from "./virtual-machine/built-ins/commands";
 
 const MILLISECONDS_PER_TICK = 1000 / CONFIG.server.ticksPerSecond;
-
-function isError(error: any): error is Error {
-  return "name" in error && "message" in error && "stack" in error;
-}
 
 let loopInterval: NodeJS.Timeout;
 export function startApplication(world: World) {
@@ -25,34 +26,29 @@ export function startApplication(world: World) {
       }
       console.log(`${entity}: ${input}`);
 
-      if (input[0] === "@") {
-        const match = /\@(.+?)\s(.+)/.exec(input);
-        if (match) {
-          console.log("Checking built-in command:", match);
-          const command = match[1].toLowerCase();
-          switch (command) {
-            case "eval":
-              try {
-                const result = world.virtualMachine.executeScript(
-                  entity,
-                  match[2]
-                );
-                if (result !== undefined) {
-                  connection.output.add(result.toString());
-                }
-                console.log({ result });
-              } catch (e: unknown) {
-                if (isError(e)) {
-                  connection.output.add(`Error while eval'ing: ${e.message}`);
-                }
-              }
-              break;
+      const builtinCommand = matchBuiltinCommand(input);
+      if (builtinCommand) {
+        const params: BuiltinCommandParameters = {
+          actor: entity,
+          world,
+          connection,
+          input,
+        };
+        try {
+          builtinCommand.execute(params);
+        } catch (e: unknown) {
+          if (isError(e)) {
+            connection.output.add(
+              `Error while executing built-in command ${builtinCommand.name}: ${e.message}`,
+            );
           }
         }
+      } else {
+        connection.output.add(`Unknown command: ${input}`);
       }
     }
 
-    for (const [entity, connection] of world.connections) {
+    for (const [, connection] of world.connections) {
       connection.sendAll();
     }
     inLoop = false;
@@ -62,4 +58,8 @@ export function startApplication(world: World) {
 export function stopApplication(reason?: string) {
   console.log(`Stopping application: ${reason}`);
   clearInterval(loopInterval);
+}
+
+function matchInGameCommand(input: string) {
+
 }

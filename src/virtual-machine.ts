@@ -121,7 +121,7 @@ function createEntityProxy(world: World, thing: Entity) {
     },
     getOwnPropertyDescriptor(
       target: Entity,
-      property: string
+      property: string,
     ): PropertyDescriptor | undefined {
       const properties = getAllGameProperties(world, thing, target);
       console.log("properties", properties);
@@ -145,7 +145,7 @@ class ConnectionStream extends Writable {
   _write(
     chunk: any,
     encoding: BufferEncoding,
-    callback: (error?: Error | null | undefined) => void
+    callback: (error?: Error | null | undefined) => void,
   ): void {
     this.world.connections;
     callback();
@@ -164,7 +164,7 @@ export class VirtualMachine {
       _write(
         chunk: any,
         encoding: BufferEncoding,
-        callback: (error?: Error | null | undefined) => void
+        callback: (error?: Error | null | undefined) => void,
       ): void {
         queue.add(chunk.toString());
         callback();
@@ -173,7 +173,7 @@ export class VirtualMachine {
   }
 
   executeScript(actor: Entity, script: string) {
-    console.log("Executing", script);
+    console.log("Executing script", script);
     const compiledScript = compileString(script);
     const actorProxy = createEntityProxy(this.world, actor);
     const connection = this.world.connections.get(actor);
@@ -187,7 +187,32 @@ export class VirtualMachine {
         me: actorProxy,
         console: new Console({ stdout: consoleStream }),
       },
-      contextOptions
+      contextOptions,
+    );
+    console.debug(`Running`);
+    const result = compiledScript.runInContext(context, runScriptOptions);
+    console.debug({ context });
+
+    return result;
+  }
+
+  executeCommand(actor: Entity, command: string, parameters: string[] = []) {
+    console.log(`Executing command: ${command}`);
+    const compiledScript = compileString(command);
+    const actorProxy = createEntityProxy(this.world, actor);
+    const connection = this.world.connections.get(actor);
+    const consoleStream = connection
+      ? this.connectionStream(connection.output)
+      : process.stdout;
+
+    console.debug(`Creating VM context`);
+    const context = vm.createContext(
+      {
+        me: actorProxy,
+        console: new Console({ stdout: consoleStream }),
+        parameters: parameters,
+      },
+      contextOptions,
     );
     console.debug(`Running`);
     const result = compiledScript.runInContext(context, runScriptOptions);

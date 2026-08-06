@@ -18,7 +18,7 @@ export abstract class Connection {
 }
 
 export class ConnectionQueue {
-  queue: string[] = [];
+  private readonly queue: string[] = [];
 
   add(text: string) {
     this.queue.push(text);

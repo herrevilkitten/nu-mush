@@ -5,20 +5,23 @@ export class Entity {
   parent?: Entity = undefined;
   location?: Entity = undefined;
   owner: Entity = this;
-  client?: string;
+  clientUri?: string;
 
   readonly contents = new Set<Entity>();
 
   readonly attributes = new Map<string, Attribute>();
 
-  constructor(public id: dbref, public name: string) {}
+  constructor(
+    public id: dbref,
+    public name: string,
+  ) {}
 
   isPlayer() {
-    return !!this.client;
+    return !!this.clientUri;
   }
 
-  isSameClient(client: string) {
-    return this.client === client;
+  isSameClient(clientUri: string) {
+    return this.clientUri === clientUri;
   }
 
   setAttribute(name: string, value: AttributeValueTypes) {
@@ -32,7 +35,7 @@ export class Entity {
   addContent(entity: Entity) {
     if (entity.location) {
       throw new Error(
-        `dbref #${entity.id} already exists in #${entity.location}`
+        `dbref #${entity.id} already exists in #${entity.location}`,
       );
     }
     entity.location = this;
