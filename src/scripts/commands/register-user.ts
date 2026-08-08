@@ -1,4 +1,9 @@
-import { SlashCommandBuilder, Interaction, MessageFlags } from "discord.js";
+import {
+  SlashCommandBuilder,
+  Interaction,
+  MessageFlags,
+  InteractionContextType,
+} from "discord.js";
 import { SlashCommandDefinition } from "./types";
 
 import { World } from "../../world";
@@ -8,7 +13,8 @@ import { DiscordConnection } from "../../clients/discord";
 export const REGISTER_USER_COMMAND: SlashCommandDefinition = {
   data: new SlashCommandBuilder()
     .setName("register")
-    .setDescription("Register a new user"),
+    .setDescription("Register a new user")
+    .setContexts([InteractionContextType.Guild, InteractionContextType.BotDM]),
   async execute(interaction: Interaction, world: World) {
     if (!interaction.isChatInputCommand()) {
       return;

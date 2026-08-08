@@ -2,7 +2,7 @@ import { Entity } from "../../models/entity";
 import { World } from "../../world";
 
 export const FUNCTIONS: { [name: string]: Function } = {
-  emit: (world: World, actor: Entity, text: string) => {
+  emit: (world: World, actor: Entity) => (text: string) => {
     if (!actor.location) {
       return;
     }

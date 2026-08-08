@@ -57,7 +57,15 @@ function getAllGameProperties(world: World, thing: Entity, target: Entity) {
   return new Set<string>(keys);
 }
 
-function createEntityProxy(world: World, thing: Entity) {
+interface EntityBuiltInFunctions {
+  send: (text: string) => void;
+  emit: (text: string) => void;
+}
+
+function createEntityProxy(
+  world: World,
+  thing: Entity,
+): Entity & EntityBuiltInFunctions {
   return new Proxy(thing, {
     get: function (target, prop, receiver) {
       console.log("get", target, prop, receiver);
@@ -68,9 +76,38 @@ function createEntityProxy(world: World, thing: Entity) {
       if (typeof prop !== "string") {
         return undefined;
       }
+
+      // Built in functions that are not attributes or properties of the entity
+      switch (prop) {
+        case "location":
+          if (!t.location) {
+            return undefined;
+          }
+          return createEntityProxy(world, t.location);
+        case "contents":
+          console.log("contents", t.contents);
+          return [...t.contents].map((content) =>
+            createEntityProxy(world, content),
+          );
+        case "send":
+          return (text: string) => {
+            const connection = world.connections.get(t);
+            if (connection) {
+              connection.output.add(text);
+            }
+          };
+        case "emit":
+          return (text: string) => {
+            for (const target of t.location?.contents ?? []) {
+              const proxy = createEntityProxy(world, target);
+              proxy.send(text);
+            }
+          };
+      }
       let value: any;
       if (prop in t) {
         if (typeof (t as any)[prop] === "object") {
+          console.warn("Accessing object property", prop, "on entity", t.id);
           return undefined;
         }
 
@@ -134,7 +171,7 @@ function createEntityProxy(world: World, thing: Entity) {
       };
       return descriptor;
     },
-  });
+  }) as Entity & EntityBuiltInFunctions;
 }
 
 class ConnectionStream extends Writable {
@@ -182,10 +219,16 @@ export class VirtualMachine {
       : process.stdout;
 
     console.debug(`Creating VM context`);
+    const builtInFunctions: Record<string, Function> = {};
+    for (const [name, func] of Object.entries(FUNCTIONS)) {
+      builtInFunctions[name] = func(this.world, actor);
+    }
     const context = vm.createContext(
       {
+        Promise: undefined,
         me: actorProxy,
         console: new Console({ stdout: consoleStream }),
+        ...builtInFunctions,
       },
       contextOptions,
     );
@@ -208,6 +251,7 @@ export class VirtualMachine {
     console.debug(`Creating VM context`);
     const context = vm.createContext(
       {
+        Promise: undefined,
         me: actorProxy,
         console: new Console({ stdout: consoleStream }),
         parameters: parameters,

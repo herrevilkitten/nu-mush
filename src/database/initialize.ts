@@ -12,9 +12,29 @@ export function initializeDatabase(world: World) {
   const operator = world.createEntity("Operator");
 
   const firstRoom = world.createEntity("First Room");
-  firstRoom.setAttribute(
+
+  const globalRegistry = world.createEntity("Global Registry");
+  globalRegistry.setAttribute(
     "$say *",
-    `for (const thing in me.location?.contents) { }`
+    `
+      me.emit(me.name + " says '" + parameters[0] + "'");
+    `,
+  );
+  globalRegistry.setAttribute(
+    "$look",
+    `
+      if (!me.location) {
+        me.send("You are nowhere.");
+      } else {
+        me.send("**" + me.location.name + "**");
+        const contents = me.location.contents;
+        if (!contents?.length) {
+          me.send("You see nothing here.");
+        } else {
+          me.emit("You see:\\n" + contents.map(thing => "* " + thing.name).join("\\n"));
+        }
+      }
+    `,
   );
 
   operator.moveTo(firstRoom);

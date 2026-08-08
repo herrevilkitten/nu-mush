@@ -6,6 +6,8 @@ import {
   matchBuiltinCommand,
   BuiltinCommandParameters,
 } from "./virtual-machine/built-ins/commands";
+import { Entity } from "./models/entity";
+import { Attribute } from "./models/attribute";
 
 const MILLISECONDS_PER_TICK = 1000 / CONFIG.server.ticksPerSecond;
 
@@ -44,7 +46,28 @@ export function startApplication(world: World) {
           }
         }
       } else {
-        connection.output.add(`Unknown command: ${input}`);
+        const command = matchInGameCommand(world, entity, input);
+        if (command) {
+          const value = command.attr.value;
+          try {
+            if (typeof value === "string") {
+              world.virtualMachine.executeCommand(
+                entity,
+                value,
+                command.parameters,
+              );
+            }
+          } catch (e: unknown) {
+            if (isError(e)) {
+              console.error(e);
+              connection.output.add(
+                `Error while executing in-game command ${command.attr.name}: ${e.message}`,
+              );
+            }
+          }
+        } else {
+          connection.output.add(`Unknown command: ${input}`);
+        }
       }
     }
 
@@ -60,6 +83,46 @@ export function stopApplication(reason?: string) {
   clearInterval(loopInterval);
 }
 
-function matchInGameCommand(input: string) {
+/*
+ * Search for commands in the game world that match the input string.
+ * The search path is:
+ * 1. The actor
+ * 2. The actor's ancestors
+ * 3. The actor's location
+ * 4. The actor's location's ancestors
+ * 5. The actor's location's contents
+ * 6. The actor's location's contents' ancestors
+ * 7. The global registry object
+ * 8. The global registry object's contents
+ */
+function matchInGameCommand(world: World, actor: Entity, input: string) {
+  const location = actor.location;
+  const locationAncestors = location?.ancestors() ?? [];
+  const locationContents = location?.contents ? [...location.contents] : [];
+  const globalRegistry = CONFIG.world.globalRegistry
+    ? world.database.getEntityById(CONFIG.world.globalRegistry)
+    : undefined;
+  const globalRegistryContents = globalRegistry?.contents
+    ? [...globalRegistry.contents]
+    : [];
+  const searchPath = [
+    actor,
+    ...actor.ancestors(),
+    actor.location,
+    ...locationAncestors,
+    ...locationContents,
+    ...(locationContents.flatMap((thing) => thing.ancestors()) ?? []),
+    globalRegistry,
+    ...globalRegistryContents,
+    ...(globalRegistryContents.flatMap((thing) => thing.ancestors()) ?? []),
+  ].filter((thing): thing is Entity => thing !== undefined);
 
+  for (const entity of searchPath) {
+    const commandAttribute = entity.matchCommandAttribute(input);
+    if (commandAttribute) {
+      return commandAttribute;
+    }
+  }
+
+  return undefined;
 }
