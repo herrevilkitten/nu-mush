@@ -15,7 +15,6 @@ export interface Config {
   };
   world: {
     startingRoom: number;
-    // The global registry acts as a container for commands and functions that are available to all entities in the game world. It is a special entity that is always present and cannot be destroyed or removed.
     globalRegistry?: number;
   };
 }
