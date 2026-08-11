@@ -42,10 +42,6 @@ export function startClient(world: World) {
         return;
       }
 
-      console.log(
-        `Received slash command ${interaction.commandName} from ${interaction.user.id}`,
-      );
-
       const clientId = getClientURI("discord", interaction.user.id);
 
       const command = commandMap.get(interaction.commandName);
@@ -122,9 +118,7 @@ export class DiscordConnection extends Connection {
   }
 
   send(text: string) {
-    console.log(`Sending ${text}`);
     const user = this.client.users.cache.get(this.user.id);
-    console.log({ user });
     user?.send(text);
   }
 }

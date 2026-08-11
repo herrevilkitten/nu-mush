@@ -3,23 +3,30 @@ import { Connection } from "./connection";
 import { MemoryDatabase } from "./database/memory";
 import { Entity } from "./models/entity";
 import { VirtualMachine } from "./virtual-machine";
+import { matchDbRef } from "./models/dbref";
 
 export interface FindEntityOptions {
   readonly me?: boolean;
+  readonly here?: boolean;
   readonly dbref?: boolean;
   readonly contents?: boolean;
   readonly location?: boolean;
 }
 
 export class World {
-  database = new MemoryDatabase();
-
-  connections = new Map<Entity, Connection>();
-
-  virtualMachine = new VirtualMachine(this);
+  readonly database = new MemoryDatabase();
+  readonly connections = new Map<Entity, Connection>();
+  readonly virtualMachine = new VirtualMachine(this);
 
   getStartRoom() {
     return this.database.getEntityById(CONFIG.world.startingRoom);
+  }
+
+  getGlobalRegistry() {
+    if (!CONFIG.world.globalRegistry) {
+      return undefined;
+    }
+    return this.database.getEntityById(CONFIG.world.globalRegistry);
   }
 
   createEntity(name: string) {
@@ -45,26 +52,31 @@ export class World {
     name: string,
     options: FindEntityOptions = {},
   ): Entity | undefined {
-    const match = /^#(\d+)$/.exec(name);
-    if (options.dbref && match) {
-      const id = parseInt(match[1], 10);
-      return this.database.getEntityById(id);
+    const dbref = matchDbRef(name);
+    if (options.dbref && dbref !== undefined) {
+      return this.database.getEntityById(dbref);
     }
 
-    if (options.me && name.toLowerCase() === "me") {
+    const lowercaseName = name.toLowerCase();
+
+    if (options.me && lowercaseName === "me") {
       return actor;
+    }
+
+    if (options.here && actor.location && lowercaseName === "here") {
+      return actor.location;
     }
 
     if (options.location && actor.location) {
       const location = actor.location;
       return Array.from(location.contents).find(
-        (entity) => entity.name.toLowerCase() === name.toLowerCase(),
+        (entity) => entity.name.toLowerCase() === lowercaseName,
       );
     }
 
     if (options.contents) {
       return Array.from(actor.contents).find(
-        (entity) => entity.name.toLowerCase() === name.toLowerCase(),
+        (entity) => entity.name.toLowerCase() === lowercaseName,
       );
     }
 
