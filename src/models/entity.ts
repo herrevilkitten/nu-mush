@@ -78,7 +78,9 @@ export class Entity {
   }
 
   moveFrom() {
+    const oldLocation = this.location;
     this.location?.removeContent(this);
+    return oldLocation;
   }
 
   moveTo(destination: Entity) {

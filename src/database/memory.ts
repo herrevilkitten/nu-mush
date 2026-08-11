@@ -14,6 +14,21 @@ export class MemoryDatabase {
   }
 
   removeEntity(entity: Entity) {
+    // Remove the Entity from its location
+    const oldLocation = entity.moveFrom();
+    // Move all of its contents to its old location
+    if (oldLocation) {
+      for (const content of entity.contents) {
+        content.moveTo(oldLocation);
+      }
+    } else {
+      // If the entity had no location, then its contents will not either
+      for (const content of entity.contents) {
+        content.moveFrom();
+      }
+    }
+
+    // TODO: Update the parent/child hierarchy
     this.entities.delete(entity.id);
   }
 
@@ -32,7 +47,7 @@ export class MemoryDatabase {
 
   getEntityByClient(client: string) {
     return [...this.entities.values()].find((entity) =>
-      entity.isSameClient(client)
+      entity.isSameClient(client),
     );
   }
 

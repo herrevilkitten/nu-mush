@@ -131,6 +131,49 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
       );
     },
   },
+  {
+    pattern: "@create",
+    description: "Creates a new entity in the game world",
+    execute: ({ world, connection, input }) => {
+      const parts = input.split(" ");
+      if (parts.length < 2) {
+        connection.output.add("Usage: @create <entity-name>");
+        return;
+      }
+      const entityName = parts.slice(1).join(" ");
+      const newEntity = world.createEntity(entityName);
+      connection.output.add(
+        `Created new entity ${newEntity.name} with dbref #${newEntity.id}`,
+      );
+    },
+  },
+  {
+    pattern: "@destroy",
+    description: "Destroys an entity in the game world",
+    execute: ({ world, connection, input }) => {
+      const parts = input.split(" ");
+      if (parts.length < 2) {
+        connection.output.add("Usage: @destroy <entity-name>");
+        return;
+      }
+      const entityName = parts.slice(1).join(" ");
+      const entity = world.findEntity(connection.entity, entityName, {
+        contents: true,
+        location: true,
+        me: true,
+        dbref: true,
+      });
+      if (!entity) {
+        connection.output.add(`Entity not found: ${entityName}`);
+        return;
+      }
+
+      world.database.removeEntity(entity);
+      connection.output.add(
+        `Destroyed entity ${entity.name} with dbref #${entity.id}`,
+      );
+    },
+  },
 ];
 
 export function matchBuiltinCommand(
