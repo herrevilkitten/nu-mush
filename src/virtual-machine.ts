@@ -1,5 +1,9 @@
 import vm from "vm";
-import { Attribute, isAttributeValue } from "./models/attribute";
+import {
+  Attribute,
+  isAttributeValue,
+  isCommandAttributeName,
+} from "./models/attribute";
 import { Entity } from "./models/entity";
 import { World } from "./world";
 import { Writable } from "stream";
@@ -227,6 +231,7 @@ export class VirtualMachine {
       {
         Promise: undefined,
         me: actorProxy,
+        here: actorProxy.location,
         console: new Console({ stdout: consoleStream }),
         ...builtInFunctions,
       },
@@ -253,6 +258,7 @@ export class VirtualMachine {
       {
         Promise: undefined,
         me: actorProxy,
+        here: actorProxy.location,
         console: new Console({ stdout: consoleStream }),
         parameters: parameters,
       },

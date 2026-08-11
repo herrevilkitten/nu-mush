@@ -13,14 +13,14 @@ export interface BuiltinCommandParameters {
 export type BuiltinCommand = (params: BuiltinCommandParameters) => void;
 
 export interface BuiltinCommandDefinition {
-  readonly name: string;
+  readonly pattern: string;
   readonly description: string;
   readonly execute: BuiltinCommand;
 }
 
 const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
   {
-    name: "@eval",
+    pattern: "@eval",
     description: "Evaluates a script in the context of the virtual machine",
     execute: ({ actor, world, connection, input }) => {
       try {
@@ -40,7 +40,7 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
     },
   },
   {
-    name: "@who",
+    pattern: "@who",
     description: "Lists all currently playing users",
     execute: ({ world, connection }) => {
       const playingUsers = world.getPlayingUsers();
@@ -50,7 +50,7 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
     },
   },
   {
-    name: "@who/all",
+    pattern: "@who/all",
     description: "Lists all players, including those not currently playing",
     execute: ({ world, connection }) => {
       const allUsers = world.getRegisteredUsers();
@@ -60,7 +60,7 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
     },
   },
   {
-    name: "@quit",
+    pattern: "@quit",
     description: "Disconnects the user from the server",
     execute: ({ actor, world, connection }) => {
       connection.output.add("Goodbye!");
@@ -69,7 +69,7 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
     },
   },
   {
-    name: "@set-attribute",
+    pattern: "@set-attribute",
     description: "Sets an attribute on the indicated entity",
     execute: ({ world, connection, input }) => {
       const parts = input.split(" ");
@@ -101,7 +101,7 @@ const BUILT_IN_COMMANDS: BuiltinCommandDefinition[] = [
     },
   },
   {
-    name: "@delete-attribute",
+    pattern: "@delete-attribute",
     description: "Deletes an attribute from the indicated entity",
     execute: ({ world, connection, input }) => {
       const parts = input.split(" ");
@@ -138,6 +138,6 @@ export function matchBuiltinCommand(
 ): BuiltinCommandDefinition | undefined {
   const commandName = input.split(" ")[0].toLowerCase();
   return BUILT_IN_COMMANDS.find(
-    (command) => command.name.toLowerCase() === commandName,
+    (command) => command.pattern.toLowerCase() === commandName,
   );
 }

@@ -4,6 +4,7 @@ import {
   AttributeValueTypes,
   isCommandAttribute,
 } from "./attribute";
+import { compileAttribute } from "../virtual-machine";
 
 export class Entity {
   parent?: Entity = undefined;
@@ -29,7 +30,11 @@ export class Entity {
   }
 
   setAttribute(name: string, value: AttributeValueTypes) {
-    this.attributes.set(name, new Attribute(name, value, this));
+    const attribute = new Attribute(name, value, this);
+    this.attributes.set(name, attribute);
+    if (isCommandAttribute(attribute)) {
+      compileAttribute(attribute);
+    }
   }
 
   deleteAttribute(name: string) {
@@ -45,28 +50,13 @@ export class Entity {
   matchCommandAttribute(input: string) {
     const commandAttributes = this.listCommandAttributes();
     for (const attr of commandAttributes) {
-      const pattern = attr.name.slice(1); // Remove the "$" prefix
-
-      // Command patterns are normally globs.
-      // TODO: add regular expression support
-
-      // Convert the glob into a regular expression:
-      // ?* becomes .+ (this is not strictly glob, but it is a common pattern)
-      // ? becomes .
-      // * becomes .*
-      // Globs need to be saved as command parameters
-      // Whitespace should be trimmed and squished
-      // Commands should always be case-insensitive
-      const regexPattern = pattern
-        .replace(/\?\*/g, "(.+)")
-        .replace(/\?/g, "(.)")
-        .replace(/\*/g, "(.*)")
-        .replace(/\s+/g, "\\s+")
-        .trim();
-      const regex = new RegExp(regexPattern, "i");
-      const match = input.match(regex);
+      const matchPattern = attr.matchPattern;
+      if (!matchPattern) {
+        continue;
+      }
+      const match = input.match(matchPattern);
       if (match) {
-        return {attr, parameters: match.slice(1)}; // Return the attribute and the captured parameters
+        return { attr, parameters: match.slice(1) }; // Return the attribute and the captured parameters
       }
     }
     return undefined;

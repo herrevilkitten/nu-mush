@@ -41,7 +41,7 @@ export function startApplication(world: World) {
         } catch (e: unknown) {
           if (isError(e)) {
             connection.output.add(
-              `Error while executing built-in command ${builtinCommand.name}: ${e.message}`,
+              `Error while executing built-in command ${builtinCommand.pattern}: ${e.message}`,
             );
           }
         }
