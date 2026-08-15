@@ -56,7 +56,7 @@ export class Entity {
       }
       const match = input.match(matchPattern);
       if (match) {
-        return { attr, parameters: match.slice(1) }; // Return the attribute and the captured parameters
+        return { attr, parameters: match.slice(1) };
       }
     }
     return undefined;

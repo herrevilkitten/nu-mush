@@ -1,4 +1,4 @@
-import { CONFIG } from "./config";
+import { Config } from "./config";
 import { Connection } from "./connection";
 import { MemoryDatabase } from "./database/memory";
 import { Entity } from "./models/entity";
@@ -14,19 +14,24 @@ export interface FindEntityOptions {
 }
 
 export class World {
+  private readonly config: Config;
   readonly database = new MemoryDatabase();
   readonly connections = new Map<Entity, Connection>();
   readonly virtualMachine = new VirtualMachine(this);
 
+  constructor(config: Config) {
+    this.config = config;
+  }
+
   getStartRoom() {
-    return this.database.getEntityById(CONFIG.world.startingRoom);
+    return this.database.getEntityById(this.config.world.startingRoom);
   }
 
   getGlobalRegistry() {
-    if (!CONFIG.world.globalRegistry) {
+    if (!this.config.world.globalRegistry) {
       return undefined;
     }
-    return this.database.getEntityById(CONFIG.world.globalRegistry);
+    return this.database.getEntityById(this.config.world.globalRegistry);
   }
 
   createEntity(name: string) {

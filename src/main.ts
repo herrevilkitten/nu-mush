@@ -1,3 +1,4 @@
+import { CONFIG } from "./config";
 import { startApplication } from "./application";
 import { startClient as startDiscordClient } from "./clients/discord";
 import { initializeDatabase } from "./database/initialize";
@@ -5,7 +6,7 @@ import { World } from "./world";
 
 function main() {
   console.log("Creating world");
-  const world = new World();
+  const world = new World(CONFIG);
 
   console.log("Initialize database");
   initializeDatabase(world);
